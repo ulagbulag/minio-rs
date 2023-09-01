@@ -658,16 +658,7 @@ impl Filter {
     pub fn from_xml(element: &Element) -> Result<Filter, Error> {
         let and_operator = match element.get_child("And") {
             Some(v) => Some(AndOperator {
-                prefix: match v.get_child("Prefix") {
-                    Some(p) => Some(
-                        p.get_text()
-                            .ok_or(Error::XmlError(
-                                "text of <Prefix> tag not found".to_string(),
-                            ))?
-                            .to_string(),
-                    ),
-                    None => None,
-                },
+                prefix: get_option_text(v, "Prefix"),
                 tags: match v.get_child("Tag") {
                     Some(tags) => {
                         let mut map: HashMap<String, String> = HashMap::new();
@@ -685,16 +676,7 @@ impl Filter {
             None => None,
         };
 
-        let prefix = match element.get_child("Prefix") {
-            Some(v) => Some(
-                v.get_text()
-                    .ok_or(Error::XmlError(
-                        "text of <Prefix> tag not found".to_string(),
-                    ))?
-                    .to_string(),
-            ),
-            None => None,
-        };
+        let prefix = get_option_text(element, "Prefix");
 
         let tag = match element.get_child("Tag") {
             Some(v) => Some(Tag {
@@ -1667,7 +1649,9 @@ impl ReplicationRule {
     }
 
     pub fn to_xml(&self) -> String {
-        let mut data = self.destination.to_xml();
+        let mut data = String::from("<Rule>");
+
+        data.push_str(&self.destination.to_xml());
 
         if let Some(v) = self.delete_marker_replication_status {
             data.push_str("<DeleteMarkerReplication>");
@@ -1746,6 +1730,7 @@ impl ReplicationRule {
         });
         data.push_str("</Status>");
 
+        data.push_str("</Rule>");
         data
     }
 }
@@ -1763,13 +1748,11 @@ impl ReplicationConfig {
             rules: Vec::new(),
         };
 
-        if let Some(v) = root.get_child("Rule") {
-            for rule in &v.children {
-                config
-                    .rules
-                    .push(ReplicationRule::from_xml(rule.as_element().ok_or(
-                        Error::XmlError("<Rule> tag not found".to_string()),
-                    )?)?);
+        for rule in &root.children {
+            if let Some(rule) = rule.as_element() {
+                if rule.name == "Rule" {
+                    config.rules.push(ReplicationRule::from_xml(rule)?);
+                }
             }
         }
 
@@ -1780,9 +1763,9 @@ impl ReplicationConfig {
         let mut data = String::from("<ReplicationConfiguration>");
 
         if let Some(v) = &self.role {
-            data.push_str("<Status>");
+            data.push_str("<Role>");
             data.push_str(v);
-            data.push_str("</Status>");
+            data.push_str("</Role>");
         }
 
         for rule in &self.rules {
