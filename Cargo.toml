@@ -13,7 +13,7 @@ rustls-tls = ["reqwest/rustls-tls"]
 [dependencies]
 async-recursion = "=1.0"
 base64 = "=0.21"
-bytes = "=1.4"
+bytes = "=1.5"
 byteorder = "=1.4"
 chrono = "=0.4"
 crc = "=3.0"
