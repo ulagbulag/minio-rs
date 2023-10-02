@@ -16,7 +16,7 @@
 use crate::s3::utils;
 use std::any::Any;
 
-pub trait Sse: std::fmt::Debug {
+pub trait Sse: Send + Sync + std::fmt::Debug {
     fn headers(&self) -> utils::Multimap;
     fn copy_headers(&self) -> utils::Multimap;
     fn tls_required(&self) -> bool;
